@@ -153,79 +153,6 @@ class minimaxAI(connect4Player):
 		return player_score - opponent_score
 
 
-# class alphaBetaAI(connect4Player):
-#	def __init__(self, position, seed=0, CVDMode=False, depth=4):
-#		super().__init__(position, seed, CVDMode)
-#		self.depth = depth
-
-#	def play(self, env, move: list) -> None:
-#		_, chosen_move = self.minimax(env, self.depth, True, float('-inf'), float('inf'))
-#		move[0] = chosen_move
-
-#	def minimax(self, env, depth, maximizingPlayer, alpha, beta):
-#		if depth == 0:
-#			return self.eval_function(env.board), None
-		
-#		possible_moves = [i for i, p in enumerate(env.topPosition) if p >= 0]
-		
-#		if not possible_moves:
-#			return 0, None	# Game is a draw or the board is full
-
-#		if maximizingPlayer:
-#			maxEval = float('-inf')
-#			best_move = None
-#			for move in possible_moves:
-#				env_copy = deepcopy(env)
-#				self.simulateMove(env_copy, move, self.position)
-#				if env_copy.gameOver(move, self.position):
-#					return float('inf'), move  # Immediate win
-#				eval, _ = self.minimax(env_copy, depth-1, False, alpha, beta)
-#				if eval > maxEval:
-#					maxEval = eval
-#					best_move = move
-#				alpha = max(alpha, eval)
-#				if beta <= alpha:
-#					break  # Beta cut-off
-#			return maxEval, best_move
-#		else:
-#			minEval = float('inf')
-#			best_move = None
-#			opponent_position = 1 if self.position == 2 else 2
-#			for move in possible_moves:
-#				env_copy = deepcopy(env)
-#				self.simulateMove(env_copy, move, opponent_position)
-#				if env_copy.gameOver(move, opponent_position):
-#					return float('-inf'), move	# Immediate loss
-#				eval, _ = self.minimax(env_copy, depth-1, True, alpha, beta)
-#				if eval < minEval:
-#					minEval = eval
-#					best_move = move
-#				beta = min(beta, eval)
-#				if beta <= alpha:
-#					break  # Alpha cut-off
-#			return minEval, best_move
-
-#	def simulateMove(self, env, move: int, player: int):
-#		env.board[env.topPosition[move]][move] = player
-#		env.topPosition[move] -= 1
-#		if hasattr(env, 'history'):
-#			env.history.append(move)
-
-#	def eval_function(self, board):
-#		weight_matrix = np.array([
-#			[3, 4, 5, 7, 5, 4, 3],
-#			[4, 6, 8, 10, 8, 6, 4],
-#			[5, 8, 11, 13, 11, 8, 5],
-#			[5, 8, 11, 13, 11, 8, 5],
-#			[4, 6, 8, 10, 8, 6, 4],
-#			[3, 4, 5, 7, 5, 4, 3]
-#		])
-#		board_array = np.array(board)
-#		player_score = np.sum(weight_matrix * (board_array == self.position))
-#		opponent_position = 1 if self.position == 2 else 2
-#		opponent_score = np.sum(weight_matrix * (board_array == opponent_position))
-#		return player_score - opponent_score
-
 class alphaBetaAI(connect4Player):
 	def __init__(self, position, seed=0, CVDMode=False, depth=4):
 		super().__init__(position, seed, CVDMode)
@@ -234,65 +161,56 @@ class alphaBetaAI(connect4Player):
 	def play(self, env, move: list) -> None:
 		_, chosen_move = self.minimax(env, self.depth, True, float('-inf'), float('inf'))
 		move[0] = chosen_move
-	
+
 	def minimax(self, env, depth, maximizingPlayer, alpha, beta):
 		if depth == 0:
 			return self.eval_function(env.board), None
-
-		if not [i for i, p in enumerate(env.topPosition) if p >= 0]:
+		
+		possible_moves = [i for i, p in enumerate(env.topPosition) if p >= 0]
+		
+		if not possible_moves:
 			return 0, None	# Game is a draw or the board is full
 
 		if maximizingPlayer:
-			return self.maximize(env, depth, alpha, beta)
+			maxEval = float('-inf')
+			best_move = None
+			for move in possible_moves:
+				env_copy = deepcopy(env)
+				self.simulateMove(env_copy, move, self.position)
+				if env_copy.gameOver(move, self.position):
+					return float('inf'), move  # Immediate win
+				eval, _ = self.minimax(env_copy, depth-1, False, alpha, beta)
+				if eval > maxEval:
+					maxEval = eval
+					best_move = move
+				alpha = max(alpha, eval)
+				if beta <= alpha:
+					break  # Beta cut-off
+			return maxEval, best_move
 		else:
-			return self.minimize(env, depth, alpha, beta)
-
-	
-	def maximize(self, env, depth, alpha, beta):
-		maxEval = float('-inf')
-		best_move = None
-		possible_moves = [i for i, p in enumerate(env.topPosition) if p >= 0]
-		
-		for move in possible_moves:
-			env_copy = deepcopy(env)
-			self.simulateMove(env_copy, move, self.position)
-			if env_copy.gameOver(move, self.position):
-				return float('inf'), move  # Immediate win
-			eval, _ = self.minimax(env_copy, depth - 1, False, alpha, beta)
-			if eval > maxEval:
-				maxEval = eval
-				best_move = move
-			alpha = max(alpha, eval)
-			if beta <= alpha:
-				break  # Beta cut-off
-		return maxEval, best_move
-
-	def minimize(self, env, depth, alpha, beta):
-		minEval = float('inf')
-		best_move = None
-		opponent_position = 1 if self.position == 2 else 2
-		possible_moves = [i for i, p in enumerate(env.topPosition) if p >= 0]
-		
-		for move in possible_moves:
-			env_copy = deepcopy(env)
-			self.simulateMove(env_copy, move, opponent_position)
-			if env_copy.gameOver(move, opponent_position):
-				return float('-inf'), move	# Immediate loss
-			eval, _ = self.minimax(env_copy, depth - 1, True, alpha, beta)
-			if eval < minEval:
-				minEval = eval
-				best_move = move
-			beta = min(beta, eval)
-			if beta <= alpha:
-				break  # Alpha cut-off
-		return minEval, best_move
+			minEval = float('inf')
+			best_move = None
+			opponent_position = 1 if self.position == 2 else 2
+			for move in possible_moves:
+				env_copy = deepcopy(env)
+				self.simulateMove(env_copy, move, opponent_position)
+				if env_copy.gameOver(move, opponent_position):
+					return float('-inf'), move	# Immediate loss
+				eval, _ = self.minimax(env_copy, depth-1, True, alpha, beta)
+				if eval < minEval:
+					minEval = eval
+					best_move = move
+				beta = min(beta, eval)
+				if beta <= alpha:
+					break  # Alpha cut-off
+			return minEval, best_move
 
 	def simulateMove(self, env, move: int, player: int):
 		env.board[env.topPosition[move]][move] = player
 		env.topPosition[move] -= 1
 		if hasattr(env, 'history'):
 			env.history.append(move)
-	
+
 	def eval_function(self, board):
 		weight_matrix = np.array([
 			[3, 4, 5, 7, 5, 4, 3],
@@ -307,6 +225,88 @@ class alphaBetaAI(connect4Player):
 		opponent_position = 1 if self.position == 2 else 2
 		opponent_score = np.sum(weight_matrix * (board_array == opponent_position))
 		return player_score - opponent_score
+
+# class alphaBetaAI(connect4Player):
+# 	def __init__(self, position, seed=0, CVDMode=False, depth=4):
+# 		super().__init__(position, seed, CVDMode)
+# 		self.depth = depth
+
+# 	def play(self, env, move: list) -> None:
+# 		_, chosen_move = self.minimax(env, self.depth, True, float('-inf'), float('inf'))
+# 		move[0] = chosen_move
+	
+# 	def minimax(self, env, depth, maximizingPlayer, alpha, beta):
+# 		if depth == 0:
+# 			return self.eval_function(env.board), None
+
+# 		if not [i for i, p in enumerate(env.topPosition) if p >= 0]:
+# 			return 0, None	# Game is a draw or the board is full
+
+# 		if maximizingPlayer:
+# 			return self.maximize(env, depth, alpha, beta)
+# 		else:
+# 			return self.minimize(env, depth, alpha, beta)
+
+	
+# 	def maximize(self, env, depth, alpha, beta):
+# 		maxEval = float('-inf')
+# 		best_move = None
+# 		possible_moves = [i for i, p in enumerate(env.topPosition) if p >= 0]
+		
+# 		for move in possible_moves:
+# 			env_copy = deepcopy(env)
+# 			self.simulateMove(env_copy, move, self.position)
+# 			if env_copy.gameOver(move, self.position):
+# 				return float('inf'), move  # Immediate win
+# 			eval, _ = self.minimax(env_copy, depth - 1, False, alpha, beta)
+# 			if eval > maxEval:
+# 				maxEval = eval
+# 				best_move = move
+# 			alpha = max(alpha, eval)
+# 			if beta <= alpha:
+# 				break  # Beta cut-off
+# 		return maxEval, best_move
+
+# 	def minimize(self, env, depth, alpha, beta):
+# 		minEval = float('inf')
+# 		best_move = None
+# 		opponent_position = 1 if self.position == 2 else 2
+# 		possible_moves = [i for i, p in enumerate(env.topPosition) if p >= 0]
+		
+# 		for move in possible_moves:
+# 			env_copy = deepcopy(env)
+# 			self.simulateMove(env_copy, move, opponent_position)
+# 			if env_copy.gameOver(move, opponent_position):
+# 				return float('-inf'), move	# Immediate loss
+# 			eval, _ = self.minimax(env_copy, depth - 1, True, alpha, beta)
+# 			if eval < minEval:
+# 				minEval = eval
+# 				best_move = move
+# 			beta = min(beta, eval)
+# 			if beta <= alpha:
+# 				break  # Alpha cut-off
+# 		return minEval, best_move
+
+# 	def simulateMove(self, env, move: int, player: int):
+# 		env.board[env.topPosition[move]][move] = player
+# 		env.topPosition[move] -= 1
+# 		if hasattr(env, 'history'):
+# 			env.history.append(move)
+	
+# 	def eval_function(self, board):
+# 		weight_matrix = np.array([
+# 			[3, 4, 5, 7, 5, 4, 3],
+# 			[4, 6, 8, 10, 8, 6, 4],
+# 			[5, 8, 11, 13, 11, 8, 5],
+# 			[5, 8, 11, 13, 11, 8, 5],
+# 			[4, 6, 8, 10, 8, 6, 4],
+# 			[3, 4, 5, 7, 5, 4, 3]
+# 		])
+# 		board_array = np.array(board)
+# 		player_score = np.sum(weight_matrix * (board_array == self.position))
+# 		opponent_position = 1 if self.position == 2 else 2
+# 		opponent_score = np.sum(weight_matrix * (board_array == opponent_position))
+# 		return player_score - opponent_score
 
 
 
