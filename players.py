@@ -93,72 +93,73 @@ class minimaxAI(connect4Player):
         _, chosen_move = self.minimax(env, self.depth, True, float('-inf'), float('inf'))
         move[0] = chosen_move
 
-    def minimax(self, env, depth, maximizingPlayer, alpha, beta):
-        if depth == 0:
-            return self.eval_function(env.board), None
-        
-        possible_moves = self.successor(env)
+class minimaxAI(connect4Player):
+	def __init__(self, position, seed, CVDMode=False, depth=3):
+		super().__init__(position, seed, CVDMode) 
+		self.depth = depth
+	
+	def play(self, env, move: list) -> None:
+		_, chosen_move = self.minimax(env, self.depth, True)
+		move[0] = chosen_move
 
-        if maximizingPlayer:
-            maxEval = float('-inf')
-            best_move = best_move = possible_moves[0]
-            for move in possible_moves:
-                env_copy = deepcopy(env)
-                self.simulateMove(env_copy, move, self.position)
-                if env_copy.gameOver(move, self.position):
-                    return float('inf'), move  # Immediate win
-                eval, _ = self.minimax(env_copy, depth-1, False, alpha, beta)
-                if eval > maxEval:
-                    maxEval = eval
-                    best_move = move
-                alpha = max(alpha, eval)
-                if beta <= alpha:
-                    break  # Beta cut-off
-            return maxEval, best_move
-        else:
-            minEval = float('inf')
-            best_move = best_move = possible_moves[0]
-            for move in possible_moves:
-                env_copy = deepcopy(env)
-                self.simulateMove(env_copy, move, 1 if self.position == 2 else 2)
-                if env_copy.gameOver(move, 1 if self.position == 2 else 2):
-                    return float('-inf'), move 
-                eval, _ = self.minimax(env_copy, depth-1, True, alpha, beta)
-                if eval < minEval:
-                    minEval = eval
-                    best_move = move
-                beta = min(beta, eval)
-                if beta <= alpha:
-                    break 
-            return minEval, best_move
+	def minimax(self, env, depth, maximizingPlayer):
+		if depth == 0:
+			return self.eval_function(env.board), None
+		
+		possible_moves = [i for i, p in enumerate(env.topPosition) if p >= 0]
+		
+		if not possible_moves:
+			return 0, None
 
-    def successor(self, env):
-        # Return a list of columns (moves) that are not yet full
-        return [i for i, p in enumerate(env.topPosition) if p >= 0]
+		if maximizingPlayer:
+			maxEval = float('-inf')
+			best_move = None
+			for move in possible_moves:
+				env_copy = deepcopy(env)
+				self.simulateMove(env_copy, move, self.position)
+				if env_copy.gameOver(move, self.position):
+					return float('inf'), move  # Immediate win
+				eval, _ = self.minimax(env_copy, depth-1, False)
+				if eval > maxEval:
+					maxEval = eval
+					best_move = move
+			return maxEval, best_move
+		else:
+			minEval = float('inf')
+			best_move = None
+			opponent_position = 1 if self.position == 2 else 2
+			for move in possible_moves:
+				env_copy = deepcopy(env)
+				self.simulateMove(env_copy, move, opponent_position)
+				if env_copy.gameOver(move, opponent_position):
+					return float('-inf'), move	# Immediate loss
+				eval, _ = self.minimax(env_copy, depth-1, True)
+				if eval < minEval:
+					minEval = eval
+					best_move = move
+			return minEval, best_move
+	
+	def simulateMove(self, env, move: int, player: int):
+		env.board[env.topPosition[move]][move] = player
+		env.topPosition[move] -= 1
+		env.history.append(move)
 
-    def simulateMove(self, env, move: int, player: int):
-        env.board[env.topPosition[move]][move] = player
-        env.topPosition[move] -= 1
-        if hasattr(env, 'history'):
-            env.history.append(move)
-
-
-    def eval_function(self, board):
-        weight_matrix = np.array([
-            [3, 4, 5, 5, 5, 4, 3],
-            [4, 6, 8, 8, 8, 6, 4],
-            [5, 8, 12, 13, 12, 8, 5],
-            [5, 8, 12, 13, 12, 8, 5],
-            [4, 6, 8, 10, 8, 6, 4],
-            [3, 4, 5, 7, 5, 4, 3]
-        ])
-
-        board_array = np.array(board)
-        
-        player_score = np.sum(weight_matrix * (board_array == self.position))
-        opponent_score = np.sum(weight_matrix * (board_array == self.opponent.position))
-        
-        return player_score - opponent_score
+	def eval_function(self, board):
+		weight_matrix = np.array([
+			[4, 5, 6, 8, 6, 5, 4],	
+			[5, 7, 9, 11, 9, 7, 5], 
+			[6, 9, 12, 14, 12, 9, 6],
+			[6, 9, 12, 14, 12, 9, 6],
+			[5, 7, 9, 11, 9, 7, 5],
+			[4, 5, 6, 8, 6, 5, 4]
+		])
+  
+		board_array = np.array(board)
+		opponent_position = 1 if self.position == 2 else 2
+  
+		player_score = np.sum(weight_matrix * (board_array == self.position))
+		opponent_score = np.sum(weight_matrix * (board_array == opponent_position))
+		return player_score - opponent_score
 
 
 
