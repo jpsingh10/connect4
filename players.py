@@ -169,19 +169,12 @@ class alphaBetaAI(connect4Player):
 		self.depth = depth
 
 	def simulateMove(self, env, move, player):
-		"""Simulates a move in the environment."""
-		try:
-			new_env = deepcopy(env)
-			# Ensure 'move' is an integer; this is more of a diagnostic step
-			move = int(move)  # This could raise ValueError if 'move' is not convertible to int
-			new_env.board[new_env.topPosition[move]][move] = player
-			new_env.topPosition[move] -= 1
-			new_env.history[0].append(move)
-			return new_env
-		except TypeError as e:
-			print(f"TypeError encountered with move: {move}. Error: {e}")
-		except ValueError as e:
-			print(f"ValueError encountered with move: {move}. Error: {e}")
+		new_env = deepcopy(env)
+		move = int(move)
+		new_env.board[new_env.topPosition[move]][move] = player
+		new_env.topPosition[move] -= 1
+		new_env.history[0].append(move)
+		return new_env
 
 
 	def eval_function(self, board):
@@ -221,7 +214,11 @@ class alphaBetaAI(connect4Player):
 		if depth == 0:
 			return self.eval_function(env.board)
 		min_v = float('inf')
-		possible_moves = [i for i in range(len(env.topPosition)) if env.topPosition[i] >= 0]
+		possible_moves = []
+		for index, value in enumerate(env.topPosition):
+			if value >= 0:
+				possible_moves.append(index)
+
 		for move in possible_moves:
 			child_env = self.simulateMove(env, move, self.opponent.position)
 			min_v = min(min_v, self.MAX(child_env, move, depth-1, alpha, beta))
@@ -235,7 +232,11 @@ class alphaBetaAI(connect4Player):
 		alpha = -float('inf')
 		beta = float('inf')
 		max_v = -float('inf')
-		possible_moves = [i for i in range(len(env.topPosition)) if env.topPosition[i] >= 0]
+		possible_moves = []
+		for index, value in enumerate(env.topPosition):
+			if value >= 0:
+				possible_moves.append(index)
+
 		best_move = possible_moves[0]
 		for move in possible_moves:
 			child_env = self.simulateMove(env, move, self.position)
